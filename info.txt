@@ -1,0 +1,163 @@
+Pour les FLOPS:
+--------------------------------------------------------------------------------
+| FP_ARITH                                                                     |
+|            Floating-point instructions retired                               |
+|     :SCALAR_DOUBLE                                                           |
+|            Number of scalar double precision floating-point arithmetic instru|
+|            ctions (multiply by 1 to get flops)                               |
+|     :SCALAR_SINGLE                                                           |
+|            Number of scalar single precision floating-point arithmetic instru|
+|            ctions (multiply by 1 to get flops)                               |
+|     :SCALAR                                                                  |
+|            Number of SSE/AVX computational scalar floating-point instructions|
+|             retired. Applies to SSE* and AVX* scalar, double and single preci|
+|            sion floating-point: ADD SUB MUL DIV MIN MAX RSQRT RCP SQRT FM(N)A|
+|            DD/SUB. FM(N)ADD/SUB instructions count twice as they perform mult|
+|            iple calculations per element                                     |
+|     :128B_PACKED_DOUBLE                                                      |
+|            Number of scalar 128-bit packed double precision floating-point ar|
+|            ithmetic instructions (multiply by 2 to get flops)                |
+|     :128B_PACKED_SINGLE                                                      |
+|            Number of scalar 128-bit packed single precision floating-point ar|
+|            ithmetic instructions (multiply by 4 to get flops)                |
+|     :256B_PACKED_DOUBLE                                                      |
+|            Number of scalar 256-bit packed double precision floating-point ar|
+|            ithmetic instructions (multiply by 4 to get flops)                |
+|     :256B_PACKED_SINGLE                                                      |
+|            Number of scalar 256-bit packed single precision floating-point ar|
+|            ithmetic instructions (multiply by 8 to get flops)                |
+|     :PACKED                                                                  |
+|            Number of SSE/AVX computational packed floating-point instructions|
+|             retired. Applies to SSE* and AVX*, packed, double and single prec|
+|            ision floating-point: ADD SUB MUL DIV MIN MAX RSQRT RCP SQRT DPP F|
+|            M(N)ADD/SUB.  DPP and FM(N)ADD/SUB instructions count twice as the|
+|            y perform multiple calculations per element                       |
+|     :SINGLE                                                                  |
+|            Number of SSE/AVX computational single precision floating-point in|
+|            structions retired. Applies to SSE* and AVX*scalar, double and sin|
+|            gle precision floating-point: ADD SUB MUL DIV MIN MAX RCP RSQRT SQ|
+|            RT DPP FM(N)ADD/SUB.  DPP and FM(N)ADD/SUB instructions count twic|
+|            e as they perform multiple calculations per element               |
+|     :DOUBLE                                                                  |
+|            Number of SSE/AVX computational double precision floating-point in|
+|            structions retired. Applies to SSE* and AVX*scalar, double and sin|
+|            gle precision floating-point: ADD SUB MUL DIV MIN MAX SQRT DPP FM(|
+|            N)ADD/SUB.  DPP and FM(N)ADD/SUB instructions count twice as they |
+|            perform multiple calculations per element                         |
+|     :e=0                                                                     |
+|            edge level (may require counter-mask >= 1)                        |
+|     :i=0                                                                     |
+|            invert                                                            |
+|     :c=0                                                                     |
+|            counter-mask in range [0-255]                                     |
+|     :t=0                                                                     |
+|            measure any thread                                                |
+|     :intx=0                                                                  |
+|            monitor only inside transactional memory region                   |
+|     :intxcp=0                                                                |
+|            do not count occurrences inside aborted transactional memory regio|
+|            n                                                                 |
+|     :u=0                                                                     |
+|            monitor at user level                                             |
+|     :k=0                                                                     |
+|            monitor at kernel level                                           |
+|     :period=0                                                                |
+|            sampling period                                                   |
+|     :freq=0                                                                  |
+|            sampling frequency (Hz)                                           |
+|     :excl=0                                                                  |
+|            exclusive access                                                  |
+|     :mg=0                                                                    |
+|            monitor guest execution                                           |
+|     :mh=0                                                                    |
+|            monitor host execution                                            |
+|     :cpu=0                                                                   |
+|            CPU to program                                                    |
+|     :pinned=0                                                                |
+|            pin event to counters                                             |
+--------------------------------------------------------------------------------
+
+Pour le power:
+===============================================================================
+| rapl::RAPL_ENERGY_PKG                                                        |
+|            Number of Joules consumed by all cores and Last level cache on the|
+|             package. Unit is 2^-32 Joules                                    |
+|     :period=0                                                                |
+|            sampling period                                                   |
+|     :freq=0                                                                  |
+|            sampling frequency (Hz)                                           |
+|     :excl=0                                                                  |
+|            exclusive access                                                  |
+|     :cpu=0                                                                   |
+|            CPU to program                                                    |
+|     :pinned=0                                                                |
+|            pin event to counters                                             |
+--------------------------------------------------------------------------------
+| rapl::RAPL_ENERGY_DRAM                                                       |
+|            Number of Joules consumed by the DRAM. Unit is 2^-32 Joules       |
+|     :period=0                                                                |
+|            sampling period                                                   |
+|     :freq=0                                                                  |
+|            sampling frequency (Hz)                                           |
+|     :excl=0                                                                  |
+|            exclusive access                                                  |
+|     :cpu=0                                                                   |
+|            CPU to program                                                    |
+|     :pinned=0                                                                |
+|            pin event to counters                                             |
+--------------------------------------------------------------------------------
+
+Pour la mémoire:
+(Existe avec _imc0, _imc1, _imc4, _imc5)
+(N'existe pas dans PAPI 5.5.1.0 mais existe dans PAPI 5.7.0.0 (la dernière sur git))
+--------------------------------------------------------------------------------
+| bdx_unc_imc0::UNC_M_CAS_COUNT                                                |
+|            DRAM RD_CAS and WR_CAS Commands                                   |
+|     :ALL                                                                     |
+|            DRAM RD_CAS and WR_CAS Commands. All DRAM WR_CAS (w/ and w/out aut|
+|            o-pre)                                                            |
+|     :RD                                                                      |
+|            DRAM RD_CAS and WR_CAS Commands. All DRAM Reads (RD_CAS + Underfil|
+|            ls)                                                               |
+|     :RD_REG                                                                  |
+|            DRAM RD_CAS and WR_CAS Commands. All DRAM RD_CAS (w/ and w/out aut|
+|            o-pre)                                                            |
+|     :RD_RMM                                                                  |
+|            DRAM RD_CAS and WR_CAS Commands. Read CAS issued in RMM           |
+|     :RD_UNDERFILL                                                            |
+|            DRAM RD_CAS and WR_CAS Commands. Underfill Read Issued            |
+|     :RD_WMM                                                                  |
+|            DRAM RD_CAS and WR_CAS Commands. Read CAS issued in WMM           |
+|     :WR                                                                      |
+|            DRAM RD_CAS and WR_CAS Commands. All DRAM WR_CAS (both Modes)     |
+|     :WR_RMM                                                                  |
+|            DRAM RD_CAS and WR_CAS Commands. DRAM WR_CAS (w/ and w/out auto-pr|
+|            e) in Read Major Mode                                             |
+|     :WR_WMM                                                                  |
+|            DRAM RD_CAS and WR_CAS Commands. DRAM WR_CAS (w/ and w/out auto-pr|
+|            e) in Write Major Mode                                            |
+|     :e=0                                                                     |
+|            edge detect                                                       |
+|     :i=0                                                                     |
+|            invert                                                            |
+|     :t=0                                                                     |
+|            threshold in range [0-255]                                        |
+|     :period=0                                                                |
+|            sampling period                                                   |
+|     :freq=0                                                                  |
+|            sampling frequency (Hz)                                           |
+|     :excl=0                                                                  |
+|            exclusive access                                                  |
+|     :cpu=0                                                                   |
+|            CPU to program                                                    |
+|     :pinned=0                                                                |
+|            pin event to counters                                             |
+--------------------------------------------------------------------------------
+
+
+J'ai trouvé cette formule ici :   https://software.intel.com/en-us/forums/intel-moderncode-for-parallel-architectures/topic/606098
+DRAM Bandwidth in MB:
+02 	RD_BW = (sum(j=0,5; knl_unc_imc[j]::UNC_M_CAS_COUNT:RD:cpu=0) / 16384) / TIME
+03 	WR_BW = (sum(j=0,5; knl_unc_imc[j]::UNC_M_CAS_COUNT:WR:cpu=0) / 16384) / TIME
+04 	DRAM_BW = RD_BW + WR_BW
+
