@@ -161,3 +161,69 @@ DRAM Bandwidth in MB:
 03 	WR_BW = (sum(j=0,5; knl_unc_imc[j]::UNC_M_CAS_COUNT:WR:cpu=0) / 16384) / TIME
 04 	DRAM_BW = RD_BW + WR_BW
 
+
+Fréquence uncore
+existe aussi avec cbo1, cbo2, cbo3, cbo4, cbo5, cbo6, ... cbo 13
+et ha0, ha1,
+et imc0,
+et plein d'autres trucs
+--------------------------------------------------------------------------------
+| bdx_unc_cbo0::UNC_C_CLOCKTICKS                                               |
+|            Clock ticks                                                       |
+|     :e=0                                                                     |
+|            edge detect                                                       |
+|     :t=0                                                                     |
+|            threshold in range [0-255]                                        |
+|     :tf=0                                                                    |
+|            thread id filter [0-1]                                            |
+|     :cf=0                                                                    |
+|            core id filter, includes non-thread data in bit 5 [0-63]          |
+|     :period=0                                                                |
+|            sampling period                                                   |
+|     :freq=0                                                                  |
+|            sampling frequency (Hz)                                           |
+|     :excl=0                                                                  |
+|            exclusive access                                                  |
+|     :cpu=0                                                                   |
+|            CPU to program                                                    |
+|     :pinned=0                                                                |
+|            pin event to counters                                             |
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+| bdx_unc_ha0::UNC_H_CLOCKTICKS                                                |
+|            Counts the number of uclks in the HA.  This will be slightly diffe|
+|            rent than the count in the Ubox because of enable/freeze delays.  |
+|            The HA is on the other side of the die from the fixed Ubox uclk co|
+|            unter, so the drift could be somewhat larger than in units that ar|
+|            e closer like the QPI Agent.                                      |
+|     :e=0                                                                     |
+|            edge detect                                                       |
+|     :i=0                                                                     |
+|            invert                                                            |
+|     :t=0                                                                     |
+|            threshold in range [0-255]                                        |
+|     :period=0                                                                |
+|            sampling period                                                   |
+|     :freq=0                                                                  |
+|            sampling frequency (Hz)                                           |
+|     :excl=0                                                                  |
+|            exclusive access                                                  |
+|     :cpu=0                                                                   |
+|            CPU to program                                                    |
+|     :pinned=0                                                                |
+|            pin event to counters                                             |
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+| bdx_unc_imc0::UNC_M_CLOCKTICKS                                               |
+|            IMC Uncore clockticks (fixed counter)                             |
+|     :period=0                                                                |
+|            sampling period                                                   |
+|     :freq=0                                                                  |
+|            sampling frequency (Hz)                                           |
+|     :excl=0                                                                  |
+|            exclusive access                                                  |
+|     :cpu=0                                                                   |
+|            CPU to program                                                    |
+|     :pinned=0                                                                |
+|            pin event to counters                                             |
+--------------------------------------------------------------------------------
