@@ -8,7 +8,7 @@ void print_meters_header(int n_uncores) {
   printf("Time [s]\t");
   for (int m = 0; m < (int)N_METERS; m++) {
     for (int u = 0; u < n_uncores; u++) {
-      printf("%d %s\t", u, METER_NAMES[m]);
+      printf("%s %d\t", METER_NAMES[m], u);
     }
   }
   printf("\n");

@@ -23,7 +23,7 @@ Then type `make`.
 
 `make install` install the program to `/usr/local/bin`, this can be changed using the PREFIX variable.
 
-## Examples
+## Example usage
 Meter on sockets 0 and 1 every 10ms and log output into out.tsv
 ~~~~
 aypapi -s 0,1 -t 0.01 > out.tsv 
