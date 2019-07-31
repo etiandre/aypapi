@@ -19,12 +19,9 @@ for any corresponding short options.
 ## Installation
 You'll need a working installation of PAPI and hwloc. The makefile also requires pkg-config to find these.
 
-Then type:
-~~~~
-make
-~~~~
+Then type `make`.
 
-`make install` installs by default to `/usr/local/`.
+`make install` install the program to `/usr/local/bin`, this can be changed using the PREFIX variable.
 
 ## Examples
 Meter on sockets 0 and 1 every 10ms and log output into out.tsv
