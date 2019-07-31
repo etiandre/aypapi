@@ -21,4 +21,4 @@ static const size_t N_METERS = sizeof(METER_NAMES) / sizeof(char*);
 
 void print_meters_header(int n_uncores);
 
-void print_meters(double meters[], int n_uncores);
+void print_meters(double meters[], double t, int n_uncores);

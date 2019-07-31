@@ -1,7 +1,7 @@
 src = $(wildcard *.c)
 obj = $(src:.c=.o)
 
-LDFLAGS = -lpapi
+LDFLAGS = -lpapi -lhwloc
 CFLAGS = -Wall -Werror -Wstrict-overflow -Wextra -fno-strict-aliasing \
 -g \
 -march=native
