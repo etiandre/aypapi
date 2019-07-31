@@ -1,14 +1,28 @@
 # Ay Papi
 
-## Compilation
-~~~~
-make
-~~~~
-
 ## Usage
 ~~~~
-# ./aypapi <ordered cpu list> <ordered socket list>
-# ./aypapi 0,2,4,6,8,10,12,14,16,18,20,22,24,26,1,3,5,7,9,11,13,15,17,19,21,23,25 0,1
+Usage: aypapi [OPTION...]
+
+  -s, --sockets=uncore_list  Comma-separated list of sockets / package indexes
+                             to meter.
+  -t, --sleeptime=time       Time in seconds between two measurments.
+  -v, --verbose              Enable debug output.
+  -?, --help                 Give this help list
+      --usage                Give a short usage message
+  -V, --version              Print program version
+
+Mandatory or optional arguments to long options are also mandatory or optional
+for any corresponding short options.
 ~~~~
 
-Set AYPAPI_DEBUG=1 for extended debug info
+## Compilaton
+~~~~
+make install
+~~~~
+
+## Examples
+Meter on sockets 0 and 1 every 10ms and log output into out.tsv
+~~~~
+aypapi -s 0,1 -t 0.01 > out.tsv 
+~~~~
