@@ -1,4 +1,4 @@
-# Ay Papi
+# aypapi
 
 ## Usage
 ~~~~
@@ -16,10 +16,15 @@ Mandatory or optional arguments to long options are also mandatory or optional
 for any corresponding short options.
 ~~~~
 
-## Compilaton
+## Installation
+You'll need a working installation of PAPI and hwloc. The makefile also requires pkg-config to find these.
+
+Then type:
 ~~~~
-make install
+make
 ~~~~
+
+`make install` installs by default to `/usr/local/`.
 
 ## Examples
 Meter on sockets 0 and 1 every 10ms and log output into out.tsv
