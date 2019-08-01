@@ -2,7 +2,8 @@
 #include <argp.h>
 #include <stdbool.h>
 
-struct arguments {
+struct arguments
+{
   unsigned int sleep_usec;
   char* uncore_list;
   bool verbose;
