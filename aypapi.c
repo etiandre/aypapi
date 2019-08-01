@@ -1,5 +1,6 @@
+#include "aypapi.h"
+#include "arch/event.h"
 #include "args.h"
-#include "chifflet.h"
 #include "meters.h"
 #include "util.h"
 #include <argp.h>
@@ -46,7 +47,7 @@ add_event(int EventSet, const char* name, int cpu)
 void
 add_cpu_events(int EventSet, int cpu)
 {
-  for (size_t i = 0; i < N_CPU_EVTS; i++) {
+  for (int i = 0; i < N_CPU_EVTS; i++) {
     add_event(EventSet, CPU_EVT_NAMES[i], cpu);
   }
 }
@@ -54,9 +55,28 @@ add_cpu_events(int EventSet, int cpu)
 void
 add_uncore_events(int EventSet, int uncore)
 {
-  for (size_t i = 0; i < N_UNCORE_EVTS; i++) {
+  for (int i = 0; i < N_UNCORE_EVTS; i++) {
     add_event(EventSet, UNCORE_EVT_NAMES[i], uncore);
   }
+}
+
+void
+init_data(struct data* data, int cpus, int uncores)
+{
+  data->cpus = cpus;
+  data->uncores = uncores;
+  data->cpu_val = calloc(N_CPU_EVTS * cpus, sizeof(long long));
+  data->uncore_val = calloc(N_UNCORE_EVTS * uncores, sizeof(long long));
+  data->meters = calloc(N_METERS * uncores, sizeof(double));
+}
+
+void
+destroy_data(struct data* data)
+{
+  free(data->cpu_val);
+  free(data->uncore_val);
+  free(data->meters);
+  free(data); // uuuuhhh
 }
 
 int
@@ -65,7 +85,6 @@ main(int argc, char** argv)
   int EventSetCPU = PAPI_NULL;
   int EventSetUncore = PAPI_NULL;
   int retval;
-
   struct arguments arguments;
   arguments.sleep_usec = 1000000;
   arguments.verbose = false;
@@ -122,13 +141,12 @@ main(int argc, char** argv)
   // anyway so not setting any granularity options should work.
   retval = PAPI_create_eventset(&EventSetUncore);
   PAPIDIEREASON(retval, "cannot create Uncore eventset\n");
-
+  int cpus = 0;
+  int uncores = 0;
   // parse uncore list and determine on which cores we're going to meter stuff
   // also set a few constants that help with array walking later
   if (!strcmp(arguments.uncore_list, ""))
     DIE("Socket detection not yet implemented, please use -s\n");
-  int n_cpus = 0;
-  int n_uncores = 0;
   hwloc_topology_t topology;
   if (hwloc_topology_init(&topology) == -1)
     DIE("Error while initializing hwloc topology module\n");
@@ -147,41 +165,27 @@ main(int argc, char** argv)
     while (cpu_obj) {
       DEBUGP("%d ", cpu_obj->os_index);
       add_cpu_events(EventSetCPU, (int)cpu_obj->os_index);
-      n_cpus++;
+      cpus++;
       idx++;
       cpu_obj = hwloc_get_obj_below_by_type(
         topology, HWLOC_OBJ_PACKAGE, uncore, HWLOC_OBJ_PU, idx);
     }
     DEBUGP("\n");
-    n_uncores++;
+    uncores++;
     ptr = strtok(NULL, ",");
-  }
-  const int tot_uncore_evts = N_UNCORE_EVTS * n_uncores;
-  const int tot_cpu_evts = N_CPU_EVTS * n_cpus;
-  const int n_cpus_per_uncore = n_cpus / n_uncores;
-
-  if (verbose) {
-    printf("N_CPU_EVTS=%ld, N_UNCORE_EVTS=%ld, N_METERS=%ld\n",
-           N_CPU_EVTS,
-           N_UNCORE_EVTS,
-           N_METERS);
-    printf("n_cpus=%d, n_uncores=%d\n", n_cpus, n_uncores);
-    printf(
-      "tot_cpu_evts=%d, tot_uncore_evts=%d\n", tot_cpu_evts, tot_uncore_evts);
-    printf("n_cpus_per_uncore=%d\n", n_cpus_per_uncore);
   }
 
   /* Daemon */
-  LOGP("aypapi version " AYPAPI_VERSION " starting\n");
-  LOGP("Metering on %d sockets (%d PUs per socket) every %d µs\n",
-       n_uncores,
-       n_cpus_per_uncore,
-       arguments.sleep_usec);
-  long long cpu_val[tot_cpu_evts];
-  long long uncore_val[tot_uncore_evts];
-  double meters[N_METERS * n_uncores];
+  struct data data;
+  init_data(&data, cpus, uncores);
   long long t0, t1, t;
   double dt;
+
+  LOGP("aypapi version " AYPAPI_VERSION " starting\n");
+  LOGP("Metering on %d sockets (%d PUs per socket) every %d µs\n",
+       data.uncores,
+       data.cpus / data.uncores,
+       arguments.sleep_usec);
   // start the counters
   retval = PAPI_start(EventSetCPU);
   PAPIDIEREASON(retval, "Cannot start CPU meters");
@@ -189,31 +193,27 @@ main(int argc, char** argv)
   PAPIDIEREASON(retval, "Cannot start uncore meters");
   // start time measurment
   t = t0 = PAPI_get_real_usec();
-  print_meters_header(n_uncores);
+  print_meters_header(&data);
   while (1) {
     usleep(arguments.sleep_usec);
     // reset arrays
     // not using memset because floats may not behave as expected
-    for (int i = 0; i < tot_cpu_evts; i++)
-      cpu_val[i] = 0.0;
-    for (int i = 0; i < tot_uncore_evts; i++)
-      uncore_val[i] = 0.0;
+    for (int i = 0; i < N_CPU_EVTS * data.cpus; i++)
+      data.cpu_val[i] = 0.0;
+    for (int i = 0; i < N_UNCORE_EVTS * data.uncores; i++)
+      data.uncore_val[i] = 0.0;
     // read counters and reset them
-    PAPI_accum(EventSetCPU, cpu_val);
-    PAPI_accum(EventSetUncore, uncore_val);
+    PAPI_accum(EventSetCPU, data.cpu_val);
+    PAPI_accum(EventSetUncore, data.uncore_val);
     // read time
     t1 = PAPI_get_real_usec();
     dt = (double)(t1 - t) / 1000000.0;
     t = t1;
-    if (verbose) {
-      LOGP("t=%lld, dt = %f\n", t1, dt);
-      print_events(cpu_val, tot_cpu_evts);
-      print_events(uncore_val, tot_uncore_evts);
-    }
+    DEBUGP("t=%lld, dt = %f\n", t1, dt);
     // calculate meters for each uncore
-    calculate_meters(
-      cpu_val, uncore_val, dt, meters, n_uncores, n_cpus_per_uncore);
-    print_meters(meters, (double)(t - t0) / 1000000.0, n_uncores);
+    calculate_meters(&data, dt);
+    print_meters(&data, (double)(t - t0) / 1000000.0);
   }
+  destroy_data(&data);
   return 0;
 }
