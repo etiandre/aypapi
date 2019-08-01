@@ -165,12 +165,9 @@ int main(int argc, char** argv) {
   retval = PAPI_start(EventSetUncore);
   PAPIDIEREASON(retval, "Cannot start uncore meters");
   // start time measurment
-  // the nanosecond clock can measure about 4 s at most (wraps around after that), which is fine for our purposes
-  t = t0 = PAPI_get_real_nsec();
+  t = t0 = PAPI_get_real_usec();
   print_meters_header(n_uncores);
   while (1) {
-    //TODO: make this configurable by a command line switch
-    //TODO: account for execution time of this program ?
     usleep(arguments.sleep_usec);
     // reset arrays
     // not using memset because floats may not behave as expected
@@ -182,8 +179,8 @@ int main(int argc, char** argv) {
     PAPI_accum(EventSetCPU, cpu_val);
     PAPI_accum(EventSetUncore, uncore_val);
     // read time
-    t1 = PAPI_get_real_nsec();
-    dt = (double)(t1 - t) / 1000000000.0;
+    t1 = PAPI_get_real_usec();
+    dt = (double)(t1 - t) / 1000000.0;
     t = t1;
     if (verbose) {
       LOGP("t=%lld, dt = %f\n", t1, dt);
@@ -192,7 +189,7 @@ int main(int argc, char** argv) {
     }
     // calculate meters for each uncore
     calculate_meters(cpu_val, uncore_val, dt, meters, n_uncores, n_cpus_per_uncore);
-    print_meters(meters, (double)(t-t0) / 1000000000.0, n_uncores);
+    print_meters(meters, (double)(t-t0) / 1000000.0, n_uncores);
   }
   return 0;
 }
