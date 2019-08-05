@@ -2,6 +2,7 @@
 #include "arch/event.h"
 #include "args.h"
 #include "meters.h"
+#include "regulator.h"
 #include "util.h"
 #include <argp.h>
 #include <hwloc.h>
@@ -178,6 +179,7 @@ main(int argc, char** argv)
   /* Daemon */
   struct data data;
   init_data(&data, cpus, uncores);
+  regulator_init(data.uncores);
   long long t0, t1, t;
   double dt;
 
@@ -213,7 +215,9 @@ main(int argc, char** argv)
     // calculate meters for each uncore
     calculate_meters(&data, dt);
     print_meters(&data, (double)(t - t0) / 1000000.0);
+    regulate(&data);
   }
   destroy_data(&data);
+  regulator_destroy();
   return 0;
 }

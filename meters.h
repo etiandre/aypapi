@@ -23,3 +23,9 @@ print_meters_header(struct data* data);
 
 void
 print_meters(struct data* data, double t);
+
+double
+get_meter(struct data* data, int uncore_idx, enum METERS meter);
+
+void
+set_meter(struct data* data, int uncore_idx, enum METERS meter, double value);

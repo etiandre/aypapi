@@ -29,3 +29,15 @@ print_meters(struct data* data, double t)
   }
   printf("\n");
 }
+
+double
+get_meter(struct data* data, int uncore_idx, enum METERS meter)
+{
+  return data->meters[uncore_idx * N_METERS + meter];
+}
+
+void
+set_meter(struct data* data, int uncore_idx, enum METERS meter, double value)
+{
+  data->meters[uncore_idx * N_METERS + meter] = value;
+}

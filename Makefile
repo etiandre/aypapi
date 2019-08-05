@@ -1,7 +1,7 @@
 CFLAGS = -Wall -Werror -Wstrict-overflow -Wextra -fno-strict-aliasing -g -march=native
 PREFIX=/usr/local
 
-obj = aypapi.o meters.o util.o args.o
+obj = aypapi.o meters.o util.o args.o regulator.o
 LDFLAGS += `pkg-config --libs papi hwloc`
 CFLAGS += `pkg-config --cflags papi hwloc`
 
