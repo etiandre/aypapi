@@ -1,8 +1,8 @@
 CFLAGS = -Wall -Werror -Wstrict-overflow -Wextra -fno-strict-aliasing -g -march=native
 PREFIX=/usr/local
 
-obj = aypapi.o meters.o util.o args.o regulator.o
-LDFLAGS += `pkg-config --libs papi hwloc`
+obj = aypapi.o meters.o args.o regulator.o
+LDFLAGS += `pkg-config --libs papi hwloc` -llikwid
 CFLAGS += `pkg-config --cflags papi hwloc`
 
 ifndef arch
@@ -18,7 +18,7 @@ aypapi: $(obj)
 clean:
 	rm -f $(obj) aypapi
 
-install:
+install: aypapi
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	cp $< $(DESTDIR)$(PREFIX)/bin/aypapi
 

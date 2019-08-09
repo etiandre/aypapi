@@ -1,10 +1,8 @@
 #include "meters.h"
 #include "aypapi.h"
-#include "util.h"
 #include <stdio.h>
 #include <unistd.h>
 
-/** prints interleaved header */
 void
 print_meters_header(struct data* data)
 {

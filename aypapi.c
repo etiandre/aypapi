@@ -3,7 +3,6 @@
 #include "args.h"
 #include "meters.h"
 #include "regulator.h"
-#include "util.h"
 #include <argp.h>
 #include <hwloc.h>
 #include <papi.h>
@@ -13,9 +12,17 @@
 #include <string.h>
 #include <unistd.h>
 
+/** global verbose flag. If true, DEBUGP() prints. */
 int verbose = 0;
 
-void
+/** Prepares an event given its name template and a cpu index, and adds it to
+ * the given EventSet. If it fails to add it, it tries again after activating
+ * multiplex. If it fails again, the progam ends.
+ * @param EventSet EventSet index.
+ * @param name event name template, will be sprintfed with cpu
+ * @param cpu index of the cpu
+ */
+static void
 add_event(int EventSet, const char* name, int cpu)
 {
   char buf[255];
@@ -29,9 +36,6 @@ add_event(int EventSet, const char* name, int cpu)
 
   retval = PAPI_get_event_info(code, &info);
   PAPIDIEREASON(retval, "get_event_info");
-  // TODO check 1/update_freq très inférieur à période du régulateur
-  //     (c'est toujours = 0 sur les compteurs utilisés sur chifflet, ce qui est
-  //     chelou)
   DEBUGP("Adding %s (datatype=%d, freq=%d)\n",
          buf,
          info.data_type,
@@ -45,7 +49,8 @@ add_event(int EventSet, const char* name, int cpu)
     PAPIDIE(retval);
   }
 }
-void
+/** Helper function to add the target arch's cpu events */
+static void
 add_cpu_events(int EventSet, int cpu)
 {
   for (int i = 0; i < N_CPU_EVTS; i++) {
@@ -53,7 +58,8 @@ add_cpu_events(int EventSet, int cpu)
   }
 }
 
-void
+/** Helper function to add the target arch's uncore events */
+static void
 add_uncore_events(int EventSet, int uncore)
 {
   for (int i = 0; i < N_UNCORE_EVTS; i++) {
@@ -61,7 +67,7 @@ add_uncore_events(int EventSet, int uncore)
   }
 }
 
-void
+static void
 init_data(struct data* data, int cpus, int uncores)
 {
   data->cpus = cpus;
@@ -71,7 +77,7 @@ init_data(struct data* data, int cpus, int uncores)
   data->meters = calloc(N_METERS * uncores, sizeof(double));
 }
 
-void
+static void
 destroy_data(struct data* data)
 {
   free(data->cpu_val);
@@ -87,7 +93,7 @@ main(int argc, char** argv)
   int EventSetUncore = PAPI_NULL;
   int retval;
   struct arguments arguments;
-  arguments.sleep_usec = 1000000;
+  arguments.sleep_usec = 1000000; // 1s default
   arguments.verbose = false;
   arguments.uncore_list = "";
   argp_parse(&argp, argc, argv, 0, 0, &arguments);
@@ -95,12 +101,12 @@ main(int argc, char** argv)
   // make verbose state global
   if (arguments.verbose)
     verbose = 1;
+
   /* Initialize PAPI */
   if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
     perror("unable to initialize PAPI");
     exit(1);
   }
-
   retval = PAPI_multiplex_init();
   PAPIDIEREASON(retval, "cannot init multiplex");
 
@@ -109,7 +115,7 @@ main(int argc, char** argv)
   PAPIDIEREASON(retval, "cannot create CPU eventset\n");
 
   // tell PAPI that the events on this eventset will be using the CPU component
-  // (#0) this is required for setting options if we added events to this
+  // (#0). This is required for setting options. If we added events to this
   // eventset before setting options, PAPI would already know that the eventset
   // would be using the CPU component, so this wouldn't be needed. But some
   // options can only be set to an empty eventset...
@@ -117,37 +123,41 @@ main(int argc, char** argv)
   PAPIDIEREASON(retval, "assign cpu eventset");
 
   // Set the domain as high as it will go, to measure absolutely everything
-  // that's happening on the machine Not sure about what this exactly does, but
-  // i'm not taking any chances this can only be done to an empty eventset
-  // setting to ALL or another high value (eg KERNEL) requires root access
+  // that's happening on the machine. Not sure about what this exactly does, but
+  // i'm not taking any chances. This can only be done to an empty eventset
+  // Setting to ALL or another high value (eg KERNEL) requires root access
   PAPI_option_t options;
   options.domain.eventset = EventSetCPU;
   options.domain.domain = PAPI_DOM_ALL;
   retval = PAPI_set_opt(PAPI_DOMAIN, &options);
   PAPIDIEREASON(retval, "set opt PAPI_DOMAIN");
 
-  // Set granularity to "current CPU". That is to say, core, or PU in hwloc
-  // terms. By default PAPI only reads what's happening in the current thread
-  // (e.g. this program) We want everything that's happening on the core in our
-  // case. There is a PAPI_set_cmp_granularity function that can be called
+  // Set granularity to "current CPU". That is to say, core, (PU in hwloc
+  // terms). By default PAPI only reads what's happening in the current thread
+  // (this program). We want everything that's happening on the core in our
+  // case. There is also a PAPI_set_cmp_granularity function that can be called
   // before creating eventsets, but for some reason it prevents us from adding
-  // events belonging to different cpus this works tho
+  // events belonging to different cpus. This works tho
   options.granularity.eventset = EventSetCPU;
   options.granularity.granularity = PAPI_GRN_SYS;
   retval = PAPI_set_opt(PAPI_GRANUL, &options);
   PAPIDIEREASON(retval, "set opt PAPI_GRANUL");
 
   // Create the Uncore event set and set options.
-  // What we are measuring on these can't be broken down to the per-core level
-  // anyway so not setting any granularity options should work.
+  // What we are measuring on these are physically happening on the whole
+  // socket, so domain or granularity options are not needed.
   retval = PAPI_create_eventset(&EventSetUncore);
   PAPIDIEREASON(retval, "cannot create Uncore eventset\n");
+
   int cpus = 0;
   int uncores = 0;
   // parse uncore list and determine on which cores we're going to meter stuff
-  // also set a few constants that help with array walking later
-  if (!strcmp(arguments.uncore_list, ""))
-    DIE("Socket detection not yet implemented, please use -s\n");
+  // TODO error handling (bad input)
+  if (!strcmp(arguments.uncore_list, "")) {
+    // TODO if no arguments are given, the program should detect and enable all
+    // availiable uncores.
+    DIE("Socket detection not implemented, please use -s\n");
+  }
   hwloc_topology_t topology;
   if (hwloc_topology_init(&topology) == -1)
     DIE("Error while initializing hwloc topology module\n");
@@ -196,10 +206,10 @@ main(int argc, char** argv)
   // start time measurment
   t = t0 = PAPI_get_real_usec();
   print_meters_header(&data);
+  // TODO trap Ctrl-C instead of just dying
   while (1) {
     usleep(arguments.sleep_usec);
     // reset arrays
-    // not using memset because floats may not behave as expected
     for (int i = 0; i < N_CPU_EVTS * data.cpus; i++)
       data.cpu_val[i] = 0.0;
     for (int i = 0; i < N_UNCORE_EVTS * data.uncores; i++)
@@ -215,8 +225,10 @@ main(int argc, char** argv)
     // calculate meters for each uncore
     calculate_meters(&data, dt);
     print_meters(&data, (double)(t - t0) / 1000000.0);
+    // call regulator
     regulate(&data);
   }
+  // this is never called, see TODO above.
   destroy_data(&data);
   regulator_destroy();
   return 0;

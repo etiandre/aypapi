@@ -4,7 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-// CPU events defined here
+
 enum CPU_EVTS
 {
   EVT_DOUBLE,
@@ -42,9 +42,6 @@ const char* UNCORE_EVT_NAMES[] = { "rapl::RAPL_ENERGY_PKG:cpu=%d",
 
 const int N_CPU_EVTS = sizeof(CPU_EVT_NAMES) / sizeof(char*);
 const int N_UNCORE_EVTS = sizeof(UNCORE_EVT_NAMES) / sizeof(char*);
-
-void
-calculate_meters(struct data* data, double dt);
 
 void
 calculate_meters(struct data* data, double dt)
